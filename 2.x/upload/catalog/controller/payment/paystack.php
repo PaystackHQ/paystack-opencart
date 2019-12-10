@@ -23,7 +23,8 @@ class ControllerPaymentPaystack extends Controller
         if ($order_info) {
 
             $data['ref'] = uniqid('' . $this->session->data['order_id'] . '-');
-            $data['amount'] = intval($order_info['total'] * 100);
+            //$data['amount'] = intval($order_info['total'] * 100);
+            $data['amount'] = $this->currency->format(intval($order_info['total'] * 100), $order_info['currency_code'], $order_info['currency_value'], false);
             $data['email'] = $order_info['email'];
             $data['currency'] = $order_info['currency_code'];
             $data['callback'] = $this->url->link('payment/paystack/callback', 'trxref=' . rawurlencode($data['ref']), 'SSL');
@@ -46,13 +47,13 @@ class ControllerPaymentPaystack extends Controller
 
         $context = stream_context_create(
             array(
-                'http'=>array(
-                'method'=>"GET",
-                'header'=>"Authorization: Bearer " .  $skey,
+                'http' => array(
+                    'method' => "GET",
+                    'header' => "Authorization: Bearer " .  $skey,
                 )
             )
         );
-        $url = 'https://api.paystack.co/transaction/verify/'. rawurlencode($reference);
+        $url = 'https://api.paystack.co/transaction/verify/' . rawurlencode($reference);
         $request = file_get_contents($url, false, $context);
         return json_decode($request, true);
     }
@@ -74,7 +75,7 @@ class ControllerPaymentPaystack extends Controller
             // order id is what comes before the first dash in trxref
             $order_id = substr($trxref, 0, strpos($trxref, '-'));
             // if no dash were in transation reference, we will have an empty order_id
-            if(!$order_id) {
+            if (!$order_id) {
                 $order_id = 0;
             }
 
@@ -108,9 +109,6 @@ class ControllerPaymentPaystack extends Controller
                 $this->model_checkout_order->addOrderHistory($order_id, $order_status_id);
                 $this->redir_and_die($redir_url);
             }
-
         }
-
-
     }
 }

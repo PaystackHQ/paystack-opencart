@@ -23,7 +23,8 @@ class ControllerExtensionPaymentPaystack extends Controller
         if ($order_info) {
 
             $data['ref'] = uniqid('' . $this->session->data['order_id'] . '-');
-            $data['amount'] = intval($order_info['total'] * 100);
+            //$data['amount'] = intval($order_info['total'] * 100);
+            $data['amount'] = $this->currency->format(intval($order_info['total'] * 100), $order_info['currency_code'], $order_info['currency_value'], false);
             $data['email'] = $order_info['email'];
             $data['currency'] = $order_info['currency_code'];
             $data['callback'] = $this->url->link('extension/payment/paystack/callback', 'trxref=' . rawurlencode($data['ref']), 'SSL');
@@ -32,7 +33,6 @@ class ControllerExtensionPaymentPaystack extends Controller
                 return $this->load->view($this->config->get('config_template') . '/template/payment/paystack.tpl', $data);
             } else {
                 return $this->load->view('payment/paystack.tpl', $data);
-
             }
         }
     }
@@ -47,13 +47,13 @@ class ControllerExtensionPaymentPaystack extends Controller
 
         $context = stream_context_create(
             array(
-                'http'=>array(
-                    'method'=>"GET",
-                    'header'=>"Authorization: Bearer " .  $skey,
+                'http' => array(
+                    'method' => "GET",
+                    'header' => "Authorization: Bearer " .  $skey,
                 )
             )
         );
-        $url = 'https://api.paystack.co/transaction/verify/'. rawurlencode($reference);
+        $url = 'https://api.paystack.co/transaction/verify/' . rawurlencode($reference);
         $request = file_get_contents($url, false, $context);
         return json_decode($request, true);
     }
@@ -109,9 +109,6 @@ class ControllerExtensionPaymentPaystack extends Controller
                 $this->model_checkout_order->addOrderHistory($order_id, $order_status_id);
                 $this->redir_and_die($redir_url);
             }
-
         }
-
-
     }
 }
